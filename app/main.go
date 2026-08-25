@@ -26,16 +26,16 @@ func main() {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
-	for {
-		conn, err := l.Accept()
-		fmt.Println("accepted")
-		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
-		}
-
-		go handleConnection(conn)
+	// for {
+	conn, err := l.Accept()
+	fmt.Println("accepted")
+	if err != nil {
+		fmt.Println("Error accepting connection: ", err.Error())
+		os.Exit(1)
 	}
+
+	go handleConnection(conn)
+	// }
 }
 
 func handleConnection(conn net.Conn) {
