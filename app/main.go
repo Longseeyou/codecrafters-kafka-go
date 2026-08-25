@@ -33,19 +33,19 @@ func main() {
 			os.Exit(1)
 		}
 
-		handleConnection(conn)
+		go handleConnection(conn)
 	}
 }
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	// buf := make([]byte, 8)
+	buf := make([]byte, 8)
 
-	// if _, err := conn.Read(buf); err != nil {
-	// 	fmt.Println("Error reading from connection: ", err.Error())
-	// 	return
-	// }
+	if _, err := conn.Read(buf); err != nil {
+		fmt.Println("Error reading from connection: ", err.Error())
+		return
+	}
 	_, err := conn.Write([]byte{0, 0, 0, 0, 0, 0, 0, 7})
 	if err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
