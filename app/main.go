@@ -47,7 +47,7 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Error reading from connection: ", err.Error())
 		return
 	}
-	_, err := conn.Write([]byte{0, 0, 0, 0, 0, 0, 0, 7})
+	_, err := conn.Write([]byte{0, 0, 0, 1, 0, 0, 0, 7})
 	if err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
