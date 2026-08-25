@@ -28,6 +28,7 @@ func main() {
 	}
 	for {
 		conn, err := l.Accept()
+		fmt.Println("accepted")
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
@@ -51,4 +52,5 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
 	}
+	fmt.Println("sent response")
 }
