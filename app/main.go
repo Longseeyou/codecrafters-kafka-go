@@ -39,7 +39,7 @@ func handleConnection(conn net.Conn) {
 
 	buf := make([]byte, 1024)
 
-	if _, err := conn.Read(buf); err != nil {
+	if corr_id, err := conn.Read(buf); err != nil {
 		fmt.Println("Error reading from connection: ", err.Error())
 		return
 	}
