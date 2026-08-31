@@ -38,21 +38,22 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 4)
-	if _, err := conn.Read(buf); err != nil {
+	message := make([]byte, 1024)
+	if _, err := conn.Read(message); err != nil {
 		fmt.Println("error reading from connection: ", err.Error())
 		return
 	}
-	messageSize := binary.BigEndian.Uint32(buf[0:4])
-	apiKey := binary.BigEndian.Uint16(buf[4:6])
-	apiVersion := binary.BigEndian.Uint16(buf[6:8])
-	correlationID := binary.BigEndian.Uint32(buf[8:12])
+
+	messageSize := binary.BigEndian.Uint32(message[0:4])
+	apiKey := binary.BigEndian.Uint16(message[4:6])
+	apiVersion := binary.BigEndian.Uint16(message[6:8])
+	correlationID := binary.BigEndian.Uint32(message[8:12])
 	fmt.Printf("Message Size: %d, API Key: %d, API Version: %d, Correlation ID: %d\n", messageSize, apiKey, apiVersion, correlationID)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
-	if _, err := conn.Write(buf[8:12]); err != nil {
+
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, 4)
+	conn.Write(buf)
+	if _, err := conn.Write(message[8:12]); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
 	}
