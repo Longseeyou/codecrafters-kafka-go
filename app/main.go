@@ -38,7 +38,7 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 4)
 	if _, err := conn.Read(buf); err != nil {
 		fmt.Println("error reading from connection: ", err.Error())
 		return
@@ -48,6 +48,10 @@ func handleConnection(conn net.Conn) {
 	apiVersion := binary.BigEndian.Uint16(buf[6:8])
 	correlationID := binary.BigEndian.Uint32(buf[8:12])
 	fmt.Printf("Message Size: %d, API Key: %d, API Version: %d, Correlation ID: %d\n", messageSize, apiKey, apiVersion, correlationID)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
 	if _, err := conn.Write(buf[8:12]); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
