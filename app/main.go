@@ -48,8 +48,8 @@ func handleConnection(conn net.Conn) {
 	apiKey := binary.BigEndian.Uint16(message[4:6])
 	apiVersion := binary.BigEndian.Uint16(message[6:8])
 	correlationID := binary.BigEndian.Uint32(message[8:12])
-	fmt.Printf("Message Size: %d, API Key: %d, API Version: %d, Correlation ID: %d\n", messageSize, apiKey, apiVersion, correlationID)
-
+	fmt.Println("Message Size: %d, API Key: %d, API Version: %d, Correlation ID: %d\n", messageSize, apiKey, apiVersion, correlationID)
+	fmt.Println(message)
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, 4)
 	conn.Write(buf)
