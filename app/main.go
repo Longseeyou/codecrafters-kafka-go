@@ -44,16 +44,16 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	messageSize := binary.BigEndian.Uint32(message[0:4])
-	apiKey := binary.BigEndian.Uint16(message[4:6])
-	apiVersion := binary.BigEndian.Uint16(message[6:8])
-	correlationID := binary.BigEndian.Uint32(message[8:12])
-	fmt.Println("Message Size: %d, API Key: %d, API Version: %d, Correlation ID: %d\n", messageSize, apiKey, apiVersion, correlationID)
-	fmt.Println(message)
 	buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, 4)
 	conn.Write(buf)
 	if _, err := conn.Write(message[8:12]); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+	buf = make([]byte, 4)
+	buf = []byte{0, 0, 2, 3}
+	if _, err := conn.Write(buf); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
 	}
