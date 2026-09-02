@@ -52,7 +52,7 @@ func handleConnection(conn net.Conn) {
 	copy(response[4:8], message[8:12]) // correlation ID
 
 	// Response body
-	binary.BigEndian.PutUint16(response[8:10], 0) // error code
+	binary.BigEndian.PutUint16(response[8:10], 35) // error code
 
 	response[10] = 2 // compact array: 1 entry + 1
 
