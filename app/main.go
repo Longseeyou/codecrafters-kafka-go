@@ -38,6 +38,11 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+	message := make([]byte, 1024)
+	if _, err := conn.Read(message); err != nil {
+		fmt.Println("error reading from connection: ", err.Error())
+		return
+	}
 	response := make([]byte, 23)
 
 	// There are 19 bytes after the 4-byte size field.
