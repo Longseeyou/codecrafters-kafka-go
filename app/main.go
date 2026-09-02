@@ -43,6 +43,14 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("error reading from connection: ", err.Error())
 		return
 	}
+
+	apiVersion := binary.BigEndian.Uint16(message[6:8])
+
+	errorCode := uint16(0)
+	if apiVersion < 0 || apiVersion > 4 {
+		errorCode = 35
+	}
+
 	response := make([]byte, 23)
 
 	// There are 19 bytes after the 4-byte size field.
@@ -52,7 +60,7 @@ func handleConnection(conn net.Conn) {
 	copy(response[4:8], message[8:12]) // correlation ID
 
 	// Response body
-	binary.BigEndian.PutUint16(response[8:10], 0) // error code
+	binary.BigEndian.PutUint16(response[8:10], errorCode) // error code
 
 	response[10] = 2 // compact array: 1 entry + 1
 
