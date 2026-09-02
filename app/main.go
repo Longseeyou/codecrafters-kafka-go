@@ -44,8 +44,7 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 	buf := make([]byte, 4)
-	// binary.BigEndian.PutUint32(buf, 4)
-	buf = []byte{0, 0, 0, 4}
+	binary.BigEndian.PutUint32(buf, 4)
 	conn.Write(buf)
 	if _, err := conn.Write(message[8:12]); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
@@ -53,7 +52,7 @@ func handleConnection(conn net.Conn) {
 
 	}
 	buf = make([]byte, 2)
-	buf = []byte{2, 3}
+	binary.BigEndian.PutUint16(buf, 35)
 	if _, err := conn.Write(buf); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
