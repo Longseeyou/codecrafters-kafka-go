@@ -43,16 +43,45 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("error reading from connection: ", err.Error())
 		return
 	}
+	// Message size
 	buf := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, 4)
+	binary.BigEndian.PutUint32(buf, 19)
 	conn.Write(buf)
+
+	// Correlation ID
 	if _, err := conn.Write(message[8:12]); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
 
 	}
+
+	// Error code
 	buf = make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, 35)
+	binary.BigEndian.PutUint16(buf, 0)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+
+	// Api key
+	buf = make([]byte, 2)
+	binary.BigEndian.PutUint16(buf, 18)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+
+	// min version
+	buf = make([]byte, 2)
+	binary.BigEndian.PutUint16(buf, 0)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+
+	// max version
+	buf = make([]byte, 2)
+	binary.BigEndian.PutUint16(buf, 4)
 	if _, err := conn.Write(buf); err != nil {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
