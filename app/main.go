@@ -45,7 +45,7 @@ func handleConnection(conn net.Conn) {
 	}
 	// Message size
 	buf := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, 19)
+	binary.BigEndian.PutUint32(buf, 12)
 	conn.Write(buf)
 
 	// Correlation ID
