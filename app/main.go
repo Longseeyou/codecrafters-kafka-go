@@ -86,4 +86,28 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("error writing to connection: ", err.Error())
 		return
 	}
+
+	// TAG_BUFFER
+	buf = make([]byte, 1)
+	binary.BigEndian.PutUint32(buf, 0)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+
+	// throttle time
+	buf = make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, 0)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
+
+	// TAG_BUFFER
+	buf = make([]byte, 1)
+	binary.BigEndian.PutUint32(buf, 0)
+	if _, err := conn.Write(buf); err != nil {
+		fmt.Println("error writing to connection: ", err.Error())
+		return
+	}
 }
