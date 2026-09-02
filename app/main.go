@@ -38,76 +38,31 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	message := make([]byte, 1024)
-	if _, err := conn.Read(message); err != nil {
-		fmt.Println("error reading from connection: ", err.Error())
-		return
-	}
-	// Message size
-	buf := make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, 19)
-	conn.Write(buf)
+	response := make([]byte, 23)
 
-	// Correlation ID
-	if _, err := conn.Write(message[8:12]); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
+	// There are 19 bytes after the 4-byte size field.
+	binary.BigEndian.PutUint32(response[0:4], 19)
 
-	}
+	// Response header
+	copy(response[4:8], message[8:12]) // correlation ID
 
-	// Error code
-	buf = make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, 0)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
+	// Response body
+	binary.BigEndian.PutUint16(response[8:10], 0) // error code
 
-	// Api key
-	buf = make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, 18)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
+	response[10] = 2 // compact array: 1 entry + 1
 
-	// min version
-	buf = make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, 0)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
+	// API key entry
+	binary.BigEndian.PutUint16(response[11:13], 18) // API key
+	binary.BigEndian.PutUint16(response[13:15], 0)  // minimum version
+	binary.BigEndian.PutUint16(response[15:17], 4)  // maximum version
 
-	// max version
-	buf = make([]byte, 2)
-	binary.BigEndian.PutUint16(buf, 4)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
+	response[17] = 0 // API-key entry tagged fields
 
-	// TAG_BUFFER
-	buf = make([]byte, 1)
-	binary.BigEndian.PutUint32(buf, 0)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
+	binary.BigEndian.PutUint32(response[18:22], 0) // throttle time
+	response[22] = 0                               // response tagged fields
 
-	// throttle time
-	buf = make([]byte, 4)
-	binary.BigEndian.PutUint32(buf, 0)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
-		return
-	}
-
-	// TAG_BUFFER
-	buf = make([]byte, 1)
-	binary.BigEndian.PutUint32(buf, 0)
-	if _, err := conn.Write(buf); err != nil {
-		fmt.Println("error writing to connection: ", err.Error())
+	if _, err := conn.Write(response); err != nil {
+		fmt.Println("error writing response:", err)
 		return
 	}
 }
