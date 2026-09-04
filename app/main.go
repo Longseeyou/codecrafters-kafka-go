@@ -39,12 +39,12 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		// apiVersion := binary.BigEndian.Uint16(message[6:8])
+		apiVersion := binary.BigEndian.Uint16(message[6:8])
 
-		// errorCode := uint16(0)
-		// if apiVersion < 0 || apiVersion > 4 {
-		// 	errorCode = 35
-		// }
+		errorCode := uint16(0)
+		if apiVersion < 0 || apiVersion > 4 {
+			errorCode = 35
+		}
 
 		response := make([]byte, 23)
 
@@ -55,7 +55,7 @@ func handleConnection(conn net.Conn) {
 		copy(response[4:8], message[8:12]) // correlation ID
 
 		// Response body
-		binary.BigEndian.PutUint16(response[8:10], 0) // error code
+		binary.BigEndian.PutUint16(response[8:10], errorCode) // error code
 
 		response[10] = 2 // compact array: 1 entry + 1
 
