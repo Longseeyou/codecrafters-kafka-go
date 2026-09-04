@@ -32,7 +32,7 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	{
+	for {
 		message := make([]byte, 1024)
 		if _, err := conn.Read(message); err != nil {
 			fmt.Println("error reading from connection: ", err.Error())
