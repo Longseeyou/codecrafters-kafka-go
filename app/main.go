@@ -38,8 +38,8 @@ func encodeAPIVersionsResponse(header ResponseHeader, body APIVersionsResponse) 
 		payload = binary.BigEndian.AppendUint16(payload, key.APIKey)     // api_key
 		payload = binary.BigEndian.AppendUint16(payload, key.MinVersion) // api_key min_version
 		payload = binary.BigEndian.AppendUint16(payload, key.MaxVersion) // api_key max_version
+		payload = append(payload, byte(0))                               // TAG_BUFFER
 	}
-	payload = append(payload, byte(0))                  // TAG_BUFFER
 	payload = binary.BigEndian.AppendUint32(payload, 0) // throttle_time_ms
 	payload = append(payload, byte(0))                  // TAG_BUFFER
 
