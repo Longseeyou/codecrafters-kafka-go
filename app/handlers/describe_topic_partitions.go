@@ -60,12 +60,15 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartition
 	currentIndex += 2 + int(clientIDLength)       // Move index past client_id
 	currentIndex++                                // skip TAG_BUFFER
 	arrayLength := int(payload[currentIndex]) - 1 // topics array length
+	currentIndex++
+
 	for i := 0; i < arrayLength; i++ {
-		// Decode each topic name (simplified, actual implementation may vary)
 		topicNameLength := int(payload[currentIndex]) - 1 // topic name length
 		currentIndex++
+
 		topicName := string(payload[currentIndex : currentIndex+topicNameLength])
 		fmt.Println(topicName)
+
 		currentIndex += topicNameLength
 		topic := Topic{
 			TopicName: topicName,
