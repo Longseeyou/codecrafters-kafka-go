@@ -36,17 +36,17 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	fmt.Println("number of topics: ", len(body.Topics))
 	payload = append(payload, byte(len(body.Topics)+1)) // topics array length
 	for _, topic := range body.Topics {
-		payload = binary.BigEndian.AppendUint16(payload, 3)   // error_code (UNKNOWN_TOPIC_OR_PARTITION)
-		payload = append(payload, byte(len(topic.TopicName))) // topic_name length
-		payload = append(payload, []byte(topic.TopicName)...) // topic_name
-		payload = append(payload, topic.TopicID[:]...)        // topic_id
-		payload = append(payload, byte(0))                    // is_internal
-		payload = append(payload, byte(1))                    // partitions array
-		payload = binary.BigEndian.AppendUint32(payload, 0)   // authorized_operations
-		payload = append(payload, byte(0xff))                 // next_cursor (-1)
-		payload = append(payload, byte(0))                    // TAG_BUFFER
+		payload = binary.BigEndian.AppendUint16(payload, 3)     // error_code (UNKNOWN_TOPIC_OR_PARTITION)
+		payload = append(payload, byte(len(topic.TopicName)+1)) // topic_name length
+		payload = append(payload, []byte(topic.TopicName)...)   // topic_name
+		payload = append(payload, topic.TopicID[:]...)          // topic_id
+		payload = append(payload, byte(0))                      // is_internal
+		payload = append(payload, byte(1))                      // partitions array
+		payload = binary.BigEndian.AppendUint32(payload, 0)     // authorized_operations
+		payload = append(payload, byte(0))                      // TAG_BUFFER
 	}
-	payload = append(payload, byte(0)) // TAG_BUFFER
+	payload = append(payload, byte(0xff)) // next_cursor (-1)
+	payload = append(payload, byte(0))    // TAG_BUFFER
 
 	frame := make([]byte, 0, len(payload)+4)
 	frame = binary.BigEndian.AppendUint32(frame, uint32(len(payload)))
