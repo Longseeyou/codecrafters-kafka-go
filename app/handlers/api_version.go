@@ -59,10 +59,14 @@ func CheckAPIVersion(apiKey uint16, apiVersion uint16) uint16 {
 	case 18: // API Versions
 		if apiVersion >= 0 && apiVersion <= 4 {
 			return 0 // No error
+		} else {
+			return 35 // UNSUPPORTED_VERSION
 		}
 	case 75: // DescribeTopicPartitions
 		if apiVersion == 0 {
 			return 0 // No error
+		} else {
+			return 35 // UNSUPPORTED_VERSION
 		}
 	}
 	return 0
