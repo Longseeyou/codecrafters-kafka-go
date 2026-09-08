@@ -33,8 +33,7 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	payload = binary.BigEndian.AppendUint32(payload, header.CorrelationID) // correlation_id
 	payload = append(payload, byte(0))                                     // TAG_BUFFER
 	payload = binary.BigEndian.AppendUint32(payload, 0)                    // throttle_time_ms
-	fmt.Println("number of topics: ", len(body.Topics))
-	payload = append(payload, byte(len(body.Topics)+1)) // topics array length
+	payload = append(payload, byte(len(body.Topics)+1))                    // topics array length
 	for _, topic := range body.Topics {
 		payload = binary.BigEndian.AppendUint16(payload, 3)     // error_code (UNKNOWN_TOPIC_OR_PARTITION)
 		payload = append(payload, byte(len(topic.TopicName)+1)) // topic_name length
@@ -66,6 +65,7 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartition
 		topicNameLength := int(payload[currentIndex]) - 1 // topic name length
 		currentIndex++
 		topicName := string(payload[currentIndex : currentIndex+topicNameLength])
+		fmt.Println(topicName)
 		currentIndex += topicNameLength
 		topic := Topic{
 			TopicName: topicName,
