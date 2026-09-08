@@ -55,11 +55,14 @@ func DecodeAPIversionRequestHeader(payload []byte) APIRequestHeader {
 }
 
 func CheckAPIVersion(apiKey uint16, apiVersion uint16) uint16 {
-	if apiKey == 18 {
+	switch apiKey {
+	case 18: // API Versions
 		if apiVersion >= 0 && apiVersion <= 4 {
 			return 0 // No error
-		} else {
-			return 35 // Unsupported version
+		}
+	case 75: // DescribeTopicPartitions
+		if apiVersion == 0 {
+			return 0 // No error
 		}
 	}
 	return 0

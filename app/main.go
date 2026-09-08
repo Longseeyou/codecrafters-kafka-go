@@ -35,20 +35,49 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 		apiRequestHeader := handlers.DecodeAPIversionRequestHeader(payload)
-		describeTopicPartitionsRequest := handlers.DecodeDescribeTopicPartitionsRequest(payload)
-		responseHeader := handlers.ResponseHeader{
-			CorrelationID: apiRequestHeader.CorrelationID,
+		switch apiRequestHeader.APIKey {
+		case 18: // API Versions
+			handleAPIVersionsRequest(conn, payload)
+		case 75: // DescribeTopicPartitions
+			handleDescribeTopicPartitionsRequest(conn, payload)
 		}
-		describeTopicPartitionsResponse := handlers.DescribeTopicPartitionsResponse{
-			ThrottleTimeMs: 0,
-			Topics:         describeTopicPartitionsRequest.Topics,
-			NextCursor:     -1,
-		}
-		response := handlers.EncodeDescribeTopicPartitionsResponse(responseHeader, describeTopicPartitionsResponse)
-		if _, err := conn.Write(response); err != nil {
-			fmt.Println("Error sending response: ", err.Error())
-			return
-		}
+	}
+}
+
+func handleAPIVersionsRequest(conn net.Conn, payload []byte) {
+	apiRequestHeader := handlers.DecodeAPIversionRequestHeader(payload)
+	responseHeader := handlers.ResponseHeader{
+		CorrelationID: apiRequestHeader.CorrelationID,
+	}
+	errorCode := handlers.CheckAPIVersion(apiRequestHeader.APIKey, apiRequestHeader.APIVersion)
+	responseBody := handlers.APIVersionsResponse{
+		ErrorCode: errorCode,
+		APIKeys: []handlers.APIKey{
+			{APIKey: 18, MinVersion: 0, MaxVersion: 4},
+		},
+	}
+	response := handlers.EncodeAPIVersionsResponse(responseHeader, responseBody)
+	if _, err := conn.Write(response); err != nil {
+		fmt.Println("Error sending response: ", err.Error())
+		return
+	}
+}
+
+func handleDescribeTopicPartitionsRequest(conn net.Conn, payload []byte) {
+	apiRequestHeader := handlers.DecodeAPIversionRequestHeader(payload)
+	responseHeader := handlers.ResponseHeader{
+		CorrelationID: apiRequestHeader.CorrelationID,
+	}
+	// errorCode := handlers.CheckAPIVersion(apiRequestHeader.APIKey, apiRequestHeader.APIVersion)
+	describeTopicPartitionsRequest := handlers.DecodeDescribeTopicPartitionsRequest(payload)
+	responseBody := handlers.DescribeTopicPartitionsResponse{
+		Topics: describeTopicPartitionsRequest.Topics,
+	}
+	response := handlers.EncodeDescribeTopicPartitionsResponse(responseHeader, responseBody)
+
+	if _, err := conn.Write(response); err != nil {
+		fmt.Println("Error sending response: ", err.Error())
+		return
 	}
 }
 
