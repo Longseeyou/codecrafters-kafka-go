@@ -1,6 +1,8 @@
 package handlers
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 type ResponseHeader struct {
 	CorrelationID uint32
@@ -23,7 +25,7 @@ type APIVersionsResponse struct {
 	APIKeys   []APIKey
 }
 
-func encodeAPIVersionsResponse(header ResponseHeader, body APIVersionsResponse) []byte {
+func EncodeAPIVersionsResponse(header ResponseHeader, body APIVersionsResponse) []byte {
 	payload := make([]byte, 0)
 	payload = binary.BigEndian.AppendUint32(payload, header.CorrelationID) // correlation_id
 	payload = binary.BigEndian.AppendUint16(payload, body.ErrorCode)       // error_code
@@ -42,4 +44,23 @@ func encodeAPIVersionsResponse(header ResponseHeader, body APIVersionsResponse) 
 	frame = binary.BigEndian.AppendUint32(frame, uint32(len(payload)))
 	frame = append(frame, payload...)
 	return frame
+}
+
+func DecodeAPIversionRequestHeader(payload []byte) APIRequestHeader {
+	request := APIRequestHeader{}
+	request.APIKey = binary.BigEndian.Uint16(payload[0:2])
+	request.APIVersion = binary.BigEndian.Uint16(payload[2:4])
+	request.CorrelationID = binary.BigEndian.Uint32(payload[4:8])
+	return request
+}
+
+func CheckAPIVersion(apiKey uint16, apiVersion uint16) uint16 {
+	if apiKey == 18 {
+		if apiVersion >= 0 && apiVersion <= 4 {
+			return 0 // No error
+		} else {
+			return 35 // Unsupported version
+		}
+	}
+	return 0
 }
