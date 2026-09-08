@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/binary"
+	"fmt"
 )
 
 type Topic struct {
@@ -32,8 +33,9 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	payload = binary.BigEndian.AppendUint32(payload, header.CorrelationID) // correlation_id
 	payload = append(payload, byte(0))                                     // TAG_BUFFER
 	payload = binary.BigEndian.AppendUint32(payload, 0)                    // throttle_time_ms
-	payload = append(payload, byte(len(body.Topics)+1))                    // topics array length
-	payload = binary.BigEndian.AppendUint16(payload, 3)                    // error_code (UNKNOWN_TOPIC_OR_PARTITION)
+	fmt.Println("number of topics: ", len(body.Topics))
+	payload = append(payload, byte(len(body.Topics)+1)) // topics array length
+	payload = binary.BigEndian.AppendUint16(payload, 3) // error_code (UNKNOWN_TOPIC_OR_PARTITION)
 	for _, topic := range body.Topics {
 		payload = append(payload, byte(len(topic.TopicName))) // topic_name length
 		payload = append(payload, []byte(topic.TopicName)...) // topic_name
