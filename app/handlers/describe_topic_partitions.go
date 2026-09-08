@@ -54,8 +54,10 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 
 func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartitionsRequest {
 	request := DescribeTopicPartitionsRequest{}
-	arrayLength := int(payload[20]) - 1 // topics array length
-	currentIndex := 21
+	currentIndex := 8 // Start after the API request header (8 bytes)
+	clientIDLength := binary.BigEndian.Uint16(payload[currentIndex : currentIndex+2])
+	currentIndex += 2 + int(clientIDLength)       // Move index past client_id
+	arrayLength := int(payload[currentIndex]) - 1 // topics array length
 	for i := 0; i < arrayLength; i++ {
 		// Decode each topic name (simplified, actual implementation may vary)
 		topicNameLength := int(payload[currentIndex]) - 1 // topic name length
