@@ -59,6 +59,7 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartition
 	currentIndex := 8 // Start after the API request header (8 bytes)
 	clientIDLength := binary.BigEndian.Uint16(payload[currentIndex : currentIndex+2])
 	currentIndex += 2 + int(clientIDLength)       // Move index past client_id
+	currentIndex++                                // skip TAG_BUFFER
 	arrayLength := int(payload[currentIndex]) - 1 // topics array length
 	for i := 0; i < arrayLength; i++ {
 		// Decode each topic name (simplified, actual implementation may vary)
