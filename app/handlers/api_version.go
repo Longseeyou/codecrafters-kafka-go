@@ -1,0 +1,45 @@
+package handlers
+
+import "encoding/binary"
+
+type ResponseHeader struct {
+	CorrelationID uint32
+}
+
+type APIKey struct {
+	APIKey     uint16
+	MinVersion uint16
+	MaxVersion uint16
+}
+
+type APIRequestHeader struct {
+	APIKey        uint16
+	APIVersion    uint16
+	CorrelationID uint32
+}
+
+type APIVersionsResponse struct {
+	ErrorCode uint16
+	APIKeys   []APIKey
+}
+
+func encodeAPIVersionsResponse(header ResponseHeader, body APIVersionsResponse) []byte {
+	payload := make([]byte, 0)
+	payload = binary.BigEndian.AppendUint32(payload, header.CorrelationID) // correlation_id
+	payload = binary.BigEndian.AppendUint16(payload, body.ErrorCode)       // error_code
+	payload = append(payload, byte(len(body.APIKeys)+1))                   // api_keys array length
+	for _, key := range body.APIKeys {
+		payload = binary.BigEndian.AppendUint16(payload, key.APIKey)     // api_key
+		payload = binary.BigEndian.AppendUint16(payload, key.MinVersion) // api_key min_version
+		payload = binary.BigEndian.AppendUint16(payload, key.MaxVersion) // api_key max_version
+		payload = append(payload, byte(0))                               // TAG_BUFFER
+	}
+	payload = binary.BigEndian.AppendUint32(payload, 0) // throttle_time_ms
+	payload = append(payload, byte(0))                  // TAG_BUFFER
+
+	// Construct the returned frame now that we know size
+	frame := make([]byte, 0, len(payload)+4)
+	frame = binary.BigEndian.AppendUint32(frame, uint32(len(payload)))
+	frame = append(frame, payload...)
+	return frame
+}
