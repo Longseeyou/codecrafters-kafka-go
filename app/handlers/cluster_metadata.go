@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 )
 
 const (
@@ -58,14 +59,14 @@ type TopicMetadata struct {
 }
 
 type Record struct {
-	Length            int8
+	Length            int64
 	Attribute         int8
-	TimestampDelta    int8
-	OffsetDelta       int8
+	TimestampDelta    int64
+	OffsetDelta       int64
 	Key               []byte
-	ValueLength       uint8
+	ValueLength       int64
 	Value             any
-	HeadersArrayCount uint8
+	HeadersArrayCount int64
 }
 
 type RecordBatchHeader struct {
@@ -299,7 +300,7 @@ func (fr *FeatureRecord) readFeatureRecord(reader *bytes.Reader) (FeatureRecord,
 func readRecord(reader *bytes.Reader) (Record, error) {
 	record := Record{}
 
-	Length, err := readElement[int8](reader)
+	Length, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
@@ -311,25 +312,33 @@ func readRecord(reader *bytes.Reader) (Record, error) {
 	}
 	record.Attribute = Attribute
 
-	TimestampDelta, err := readElement[int8](reader)
+	TimestampDelta, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
 	record.TimestampDelta = TimestampDelta
 
-	OffsetDelta, err := readElement[int8](reader)
+	OffsetDelta, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
 	record.OffsetDelta = OffsetDelta
 
-	Key, err := readCompactArray(reader, readElement[byte])
+	keyLength, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
-	record.Key = Key
+	if keyLength < -1 || keyLength > int64(reader.Len()) {
+		return Record{}, fmt.Errorf("invalid key length: %d", keyLength)
+	}
+	if keyLength >= 0 {
+		record.Key = make([]byte, int(keyLength))
+		if _, err := io.ReadFull(reader, record.Key); err != nil {
+			return Record{}, err
+		}
+	}
 
-	ValueLength, err := readElement[uint8](reader)
+	ValueLength, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
@@ -368,7 +377,7 @@ func readRecord(reader *bytes.Reader) (Record, error) {
 		record.Value = typeRecord
 	}
 
-	HeadersArrayCount, err := readElement[uint8](reader)
+	HeadersArrayCount, err := binary.ReadVarint(reader)
 	if err != nil {
 		return Record{}, err
 	}
