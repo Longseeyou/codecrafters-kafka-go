@@ -82,12 +82,7 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	return frame
 }
 
-// func extractTopicMetada(metadata *ClusterMetadata) map[string]{
-// }
-
 func DecodeDescribeTopicPartitionsRequest(payload []byte, topicMetadata TopicMetadata) DescribeTopicPartitionsRequest {
-	// topics := extractTopicMetadata(metadata)
-
 	request := DescribeTopicPartitionsRequest{}
 	currentIndex := 8 // Start after the API request header (8 bytes)
 	clientIDLength := binary.BigEndian.Uint16(payload[currentIndex : currentIndex+2])
@@ -112,6 +107,6 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte, topicMetadata TopicMet
 	return request
 }
 
-func (topic *Topic) addPartition(partition Partition) {
-	topic.Partitions = append(topic.Partitions, partition)
-}
+// func (topic *Topic) addPartition(partition Partition) {
+// 	topic.Partitions = append(topic.Partitions, partition)
+// }

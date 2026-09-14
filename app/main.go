@@ -145,7 +145,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	metadata, _ := loadClusterMetadata(clusterMetadataLogFilePathPattern)
+	metadata, err := loadClusterMetadata(
+		"/tmp/kraft-combined-logs/__cluster_metadata-0/00000000000000000000.log",
+	)
+	if err != nil {
+		fmt.Println("Failed to load cluster metadata:", err)
+		os.Exit(1)
+	}
 
 	for {
 		conn, err := l.Accept()

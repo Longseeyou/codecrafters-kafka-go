@@ -126,7 +126,7 @@ func DecodeClusterMetadataRequest(payload []byte) (ClusterMetadata, error) {
 }
 
 func (rb *RecordBatch) readRecordBatch(reader *bytes.Reader) (RecordBatch, error) {
-	if err := binary.Read(reader, binary.BigEndian, rb.Header); err != nil {
+	if err := binary.Read(reader, binary.BigEndian, &rb.Header); err != nil {
 		return RecordBatch{}, err
 	}
 
