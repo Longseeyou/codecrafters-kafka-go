@@ -2,20 +2,29 @@ package handlers
 
 import (
 	"encoding/binary"
-	"fmt"
 )
+
+type UUID [16]byte
 
 type Topic struct {
 	ErrorCode            uint16
 	TopicName            string
-	TopicID              [16]byte
+	TopicID              UUID
 	IsInternal           bool
 	Partitions           []Partition
 	AuthorizedOperations int32
 }
 
 type Partition struct {
-	// Partition fields can be added here as needed
+	ErrorCode              int16
+	PartitionIndex         int32
+	LeaderID               int32
+	LeaderEpoch            int32
+	ReplicaNodes           []int32
+	ISRNodes               []int32
+	EligibleLeaderReplicas []int32
+	LastKnownELR           []int32
+	OfflineReplicas        []int32
 }
 
 type DescribeTopicPartitionsRequest struct {
@@ -28,6 +37,11 @@ type DescribeTopicPartitionsResponse struct {
 	NextCursor     int8
 }
 
+type TopicCursor struct {
+	TopicName      string
+	PartitionIndex int32
+}
+
 func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeTopicPartitionsResponse) []byte {
 	payload := make([]byte, 0)
 	payload = binary.BigEndian.AppendUint32(payload, header.CorrelationID) // correlation_id
@@ -35,14 +49,28 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	payload = binary.BigEndian.AppendUint32(payload, 0)                    // throttle_time_ms
 	payload = append(payload, byte(len(body.Topics)+1))                    // topics array length
 	for _, topic := range body.Topics {
-		payload = binary.BigEndian.AppendUint16(payload, 3)     // error_code (UNKNOWN_TOPIC_OR_PARTITION)
-		payload = append(payload, byte(len(topic.TopicName)+1)) // topic_name length
-		payload = append(payload, []byte(topic.TopicName)...)   // topic_name
-		payload = append(payload, topic.TopicID[:]...)          // topic_id
-		payload = append(payload, byte(0))                      // is_internal
-		payload = append(payload, byte(1))                      // partitions array
-		payload = binary.BigEndian.AppendUint32(payload, 0)     // authorized_operations
-		payload = append(payload, byte(0))                      // TAG_BUFFER
+		payload = binary.BigEndian.AppendUint16(payload, topic.ErrorCode) // error_code (UNKNOWN_TOPIC_OR_PARTITION)
+		payload = append(payload, byte(len(topic.TopicName)+1))           // topic_name length
+		payload = append(payload, []byte(topic.TopicName)...)             // topic_name
+		payload = append(payload, topic.TopicID[:]...)                    // topic_id
+		payload = append(payload, byte(0))                                // is_internal
+		payload = append(payload, byte(len(topic.Partitions)+1))          // partitions array
+		for _, partition := range topic.Partitions {
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.ErrorCode)           // error_code
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.PartitionIndex)      // partitionID
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.LeaderID)            // leaderID
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.LeaderEpoch)         // leaderEpoch
+			payload, _ = binary.Append(payload, binary.BigEndian, len(partition.ReplicaNodes)+1) // replica_nodes len
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.ReplicaNodes)        // replica_array
+			payload, _ = binary.Append(payload, binary.BigEndian, len(partition.ISRNodes)+1)     // ISR_nodes
+			payload, _ = binary.Append(payload, binary.BigEndian, partition.ISRNodes)
+			payload = append(payload, byte(1)) // ELR
+			payload = append(payload, byte(1)) // last_know_ELR
+			payload = append(payload, byte(1)) // offline_replicas
+			payload = append(payload, byte(0)) // TAG_BUFFER
+		}
+		payload = binary.BigEndian.AppendUint32(payload, 0) // authorized_operations
+		payload = append(payload, byte(0))                  // TAG_BUFFER
 	}
 	payload = append(payload, byte(0xff)) // next_cursor (-1)
 	payload = append(payload, byte(0))    // TAG_BUFFER
@@ -53,7 +81,12 @@ func EncodeDescribeTopicPartitionsResponse(header ResponseHeader, body DescribeT
 	return frame
 }
 
-func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartitionsRequest {
+// func extractTopicMetada(metadata *ClusterMetadata) map[string]{
+// }
+
+func DecodeDescribeTopicPartitionsRequest(payload []byte, topicMetadata TopicMetadata) DescribeTopicPartitionsRequest {
+	// topics := extractTopicMetadata(metadata)
+
 	request := DescribeTopicPartitionsRequest{}
 	currentIndex := 8 // Start after the API request header (8 bytes)
 	clientIDLength := binary.BigEndian.Uint16(payload[currentIndex : currentIndex+2])
@@ -67,14 +100,16 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte) DescribeTopicPartition
 		currentIndex++
 
 		topicName := string(payload[currentIndex : currentIndex+topicNameLength])
-		fmt.Println(topicName)
 
 		currentIndex += topicNameLength
-		topic := Topic{
-			TopicName: topicName,
-		}
+		topic := topicMetadata.Topics[topicName]
 		request.Topics = append(request.Topics, topic)
 		currentIndex++ // Skip TAG_BUFFER for each topic
+
 	}
 	return request
+}
+
+func (topic *Topic) addPartition(partition Partition) {
+	topic.Partitions = append(topic.Partitions, partition)
 }

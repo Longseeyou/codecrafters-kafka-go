@@ -10,6 +10,17 @@ import (
 	"github.com/codecrafters-io/kafka-starter-go/app/handlers"
 )
 
+const clusterMetadataLogFilePathPattern = "/tmp/kraft-combined-logs/%s-%s/00000000000000000000.log"
+
+func loadClusterMetadata(path string) (handlers.ClusterMetadata, error) {
+	payload, err := os.ReadFile(path)
+	if err != nil {
+		return handlers.ClusterMetadata{}, err
+	}
+
+	return handlers.DecodeClusterMetadataRequest(payload)
+}
+
 func receive(r io.Reader) (payload []byte, error error) {
 	sizeBytes := make([]byte, 4)
 	if _, err := io.ReadFull(r, sizeBytes); err != nil {
@@ -25,7 +36,7 @@ func receive(r io.Reader) (payload []byte, error error) {
 	return payload, nil
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, metadata *handlers.ClusterMetadata) {
 	defer conn.Close()
 
 	for {
@@ -39,7 +50,7 @@ func handleConnection(conn net.Conn) {
 		case 18: // API Versions
 			handleAPIVersionsRequest(conn, payload)
 		case 75: // DescribeTopicPartitions
-			handleDescribeTopicPartitionsRequest(conn, payload)
+			handleDescribeTopicPartitionsRequest(conn, payload, metadata)
 		}
 	}
 }
@@ -64,13 +75,55 @@ func handleAPIVersionsRequest(conn net.Conn, payload []byte) {
 	}
 }
 
-func handleDescribeTopicPartitionsRequest(conn net.Conn, payload []byte) {
+func extractClusterMetadata(metadata *handlers.ClusterMetadata) handlers.TopicMetadata {
+	topicMetadata := handlers.TopicMetadata{
+		Topics:     make(map[string]handlers.Topic),
+		Partitions: make(map[handlers.UUID][]handlers.Partition),
+	}
+	for _, batch := range metadata.RecordBatches {
+		for _, record := range batch.Records {
+			switch value := record.Value.(type) {
+			case handlers.PartitionRecord:
+				topicMetadata.Partitions[value.TopicUUID] = append(
+					topicMetadata.Partitions[value.TopicUUID],
+					handlers.Partition{
+						ErrorCode:              0,
+						PartitionIndex:         value.PartitionID,
+						LeaderID:               value.Leader,
+						LeaderEpoch:            value.LeaderEpoch,
+						ReplicaNodes:           value.InSyncReplicas,
+						ISRNodes:               value.InSyncReplicas,
+						EligibleLeaderReplicas: make([]int32, 0),
+						LastKnownELR:           make([]int32, 0),
+						OfflineReplicas:        make([]int32, 0),
+					},
+				)
+			case handlers.TopicRecord:
+				topicMetadata.Topics[value.TopicName] = handlers.Topic{
+					TopicName: value.TopicName,
+					TopicID:   value.TopicUUID,
+				}
+			}
+		}
+	}
+
+	for name, topic := range topicMetadata.Topics {
+		topic.Partitions = topicMetadata.Partitions[topic.TopicID]
+		topicMetadata.Topics[name] = topic
+	}
+	return topicMetadata
+}
+
+func handleDescribeTopicPartitionsRequest(conn net.Conn, payload []byte, metadata *handlers.ClusterMetadata) {
 	apiRequestHeader := handlers.DecodeAPIversionRequestHeader(payload)
 	responseHeader := handlers.ResponseHeader{
 		CorrelationID: apiRequestHeader.CorrelationID,
 	}
 	// errorCode := handlers.CheckAPIVersion(apiRequestHeader.APIKey, apiRequestHeader.APIVersion)
-	describeTopicPartitionsRequest := handlers.DecodeDescribeTopicPartitionsRequest(payload)
+
+	topicMetadata := extractClusterMetadata(metadata)
+
+	describeTopicPartitionsRequest := handlers.DecodeDescribeTopicPartitionsRequest(payload, topicMetadata)
 	responseBody := handlers.DescribeTopicPartitionsResponse{
 		Topics: describeTopicPartitionsRequest.Topics,
 	}
@@ -92,6 +145,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	metadata, _ := loadClusterMetadata(clusterMetadataLogFilePathPattern)
+
 	for {
 		conn, err := l.Accept()
 		fmt.Println("accepted")
@@ -100,6 +155,6 @@ func main() {
 			os.Exit(1)
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, &metadata)
 	}
 }
