@@ -36,13 +36,20 @@ func readUUID(reader *bytes.Reader) (UUID, error) {
 	return value, nil
 }
 
-func readCompactArray[T any](reader *bytes.Reader, readElement func(*bytes.Reader) (T, error)) ([]T, error) {
+func readCompactArray[T any](
+	reader *bytes.Reader,
+	readElement func(*bytes.Reader) (T, error),
+) ([]T, error) {
 	length, err := binary.ReadUvarint(reader)
 	if err != nil {
 		return nil, err
 	}
+	if length == 0 {
+		return nil, nil
+	}
+
 	array := make([]T, length-1)
-	for i := 0; i < int(length); i++ {
+	for i := range array {
 		element, err := readElement(reader)
 		if err != nil {
 			return nil, err
