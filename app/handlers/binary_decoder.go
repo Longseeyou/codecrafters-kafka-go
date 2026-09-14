@@ -14,7 +14,7 @@ func readCompactString(reader *bytes.Reader) (string, error) {
 	if length == 0 {
 		return "", nil
 	}
-	buf := make([]byte, length)
+	buf := make([]byte, length-1)
 	_, err = reader.Read(buf)
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func readCompactArray[T any](reader *bytes.Reader, readElement func(*bytes.Reade
 	if err != nil {
 		return nil, err
 	}
-	array := make([]T, length)
+	array := make([]T, length-1)
 	for i := 0; i < int(length); i++ {
 		element, err := readElement(reader)
 		if err != nil {

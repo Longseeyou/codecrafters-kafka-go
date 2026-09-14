@@ -165,41 +165,17 @@ func (pr *PartitionRecord) readPartitionRecord(reader *bytes.Reader) (PartitionR
 	}
 	record.TopicUUID = TopicUUID
 
-	LengthOfReplicasArray, err := readElement[uint8](reader)
-	if err != nil {
-		return PartitionRecord{}, err
-	}
-	record.LengthOfReplicasArray = LengthOfReplicasArray
-
 	Replicas, err := readCompactArray(reader, readElement[int32])
 	if err != nil {
 		return PartitionRecord{}, err
 	}
 	record.Replicas = Replicas
 
-	LengthOfInSyncReplicaArray, err := readElement[uint8](reader)
-	if err != nil {
-		return PartitionRecord{}, err
-	}
-	record.LengthOfInSyncReplicaArray = LengthOfInSyncReplicaArray
-
 	InSyncReplicas, err := readCompactArray(reader, readElement[int32])
 	if err != nil {
 		return PartitionRecord{}, err
 	}
 	record.InSyncReplicas = InSyncReplicas
-
-	LengthOfRemovingReplicasArray, err := readElement[int8](reader)
-	if err != nil {
-		return PartitionRecord{}, err
-	}
-	record.LengthOfRemovingReplicasArray = LengthOfRemovingReplicasArray
-
-	LengthOfAddingReplicasArray, err := readElement[int8](reader)
-	if err != nil {
-		return PartitionRecord{}, err
-	}
-	record.LengthOfAddingReplicasArray = LengthOfAddingReplicasArray
 
 	Leader, err := readElement[int32](reader)
 	if err != nil {
@@ -218,12 +194,6 @@ func (pr *PartitionRecord) readPartitionRecord(reader *bytes.Reader) (PartitionR
 		return PartitionRecord{}, err
 	}
 	record.PartitionEpoch = PartitionEpoch
-
-	LengthOfDirectoriesArray, err := readElement[uint8](reader)
-	if err != nil {
-		return PartitionRecord{}, err
-	}
-	record.LengthOfDirectoriesArray = LengthOfDirectoriesArray
 
 	DirectoriesArray, err := readCompactArray(reader, readUUID)
 	if err != nil {
@@ -303,6 +273,12 @@ func (fr *FeatureRecord) readFeatureRecord(reader *bytes.Reader) (FeatureRecord,
 		return FeatureRecord{}, err
 	}
 	record.FeatureLevel = FeatureLevel
+
+	TaggedFieldsCount, err := readElement[uint8](reader)
+	if err != nil {
+		return FeatureRecord{}, err
+	}
+	record.TaggedFieldsCount = TaggedFieldsCount
 
 	*fr = record
 	return record, nil
