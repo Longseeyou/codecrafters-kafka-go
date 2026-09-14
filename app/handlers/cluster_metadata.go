@@ -177,6 +177,16 @@ func (pr *PartitionRecord) readPartitionRecord(reader *bytes.Reader) (PartitionR
 	}
 	record.InSyncReplicas = InSyncReplicas
 
+	// Removing replicas
+	if _, err := readCompactArray(reader, readElement[int32]); err != nil {
+		return PartitionRecord{}, err
+	}
+
+	// Adding replicas
+	if _, err := readCompactArray(reader, readElement[int32]); err != nil {
+		return PartitionRecord{}, err
+	}
+
 	Leader, err := readElement[int32](reader)
 	if err != nil {
 		return PartitionRecord{}, err
