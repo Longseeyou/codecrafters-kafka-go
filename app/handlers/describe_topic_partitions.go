@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 type UUID [16]byte
@@ -98,8 +97,13 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte, topicMetadata TopicMet
 		topicName := string(payload[currentIndex : currentIndex+topicNameLength])
 
 		currentIndex += topicNameLength
-		topic := topicMetadata.Topics[topicName]
-		fmt.Println(topic)
+		topic, ok := topicMetadata.Topics[topicName]
+		if !ok {
+			topic = Topic{
+				ErrorCode: 3, // UNKNOWN_TOPIC_OR_PARTITION
+				TopicName: topicName,
+			}
+		}
 		request.Topics = append(request.Topics, topic)
 		currentIndex++ // Skip TAG_BUFFER for each topic
 
