@@ -27,7 +27,9 @@ type PartitionRecord struct {
 	LengthOfInSyncReplicaArray    uint8
 	InSyncReplicas                []int32
 	LengthOfRemovingReplicasArray int8
+	RemovingReplicasArray         []int32
 	LengthOfAddingReplicasArray   int8
+	AddingReplicasArray           []int32
 	Leader                        int32
 	LeaderEpoch                   int32
 	PartitionEpoch                int32
