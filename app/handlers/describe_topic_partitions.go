@@ -110,7 +110,3 @@ func DecodeDescribeTopicPartitionsRequest(payload []byte, topicMetadata TopicMet
 	}
 	return request
 }
-
-// func (topic *Topic) addPartition(partition Partition) {
-// 	topic.Partitions = append(topic.Partitions, partition)
-// }
