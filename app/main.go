@@ -66,6 +66,7 @@ func handleAPIVersionsRequest(conn net.Conn, payload []byte) {
 		APIKeys: []handlers.APIKey{
 			{APIKey: 18, MinVersion: 0, MaxVersion: 4},
 			{APIKey: 75, MinVersion: 0, MaxVersion: 0},
+			{APIKey: 0, MinVersion: 0, MaxVersion: 11},
 		},
 	}
 	response := handlers.EncodeAPIVersionsResponse(responseHeader, responseBody)
